@@ -1,0 +1,166 @@
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+/**
+ * HelloServlet
+ * 
+ * @param <Country>
+ */
+@WebServlet("/")
+public class CountryServlet extends HttpServlet {
+
+    private static final long serialVersionUID = -1512815653974095706L;
+
+    ArrayList<Country> list = new ArrayList<Country>();
+    String mode = "";
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        doGet(req, resp);
+    }
+
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        System.out.println("Country doGet");
+        String action;
+
+        if (req.getParameter("action") != null) {
+            action = req.getParameter("action");
+        } else {
+            action = "";
+        }
+        System.out.println(action);
+        switch (action) {
+
+        case "new":
+            showNewForm(req, resp);
+            break;
+        case "verify":
+            VerifyForm(req, resp);
+            break;
+
+        case "delete":
+            deleteCountry(req, resp);
+            break;
+        case "update":
+            saveorupdateCountry(req, resp);
+            break;
+
+        case "edit":
+            System.out.println("case = edit");
+            showNewForm(req, resp);
+            break;
+
+        case "insert":
+            saveorupdateCountry(req, resp);
+            break;
+
+        case "saveorupdate":
+            saveorupdateCountry(req, resp);
+            break;
+
+        default:
+            listCountry(req, resp);
+            break;
+        }
+    }
+
+    private void updateCountry(HttpServletRequest req, HttpServletResponse resp) {
+    }
+
+    private void VerifyForm(HttpServletRequest req, HttpServletResponse resp) {
+
+    }
+
+    private void showNewForm(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        mode = "edit";
+        int id = Integer.parseInt(req.getParameter("id"));
+
+        System.out.println("edit id :" + id);
+
+        String query = "SELECT * from datas where id=" + id + "";
+        try {
+
+            List<Object> list = MysqlConnect.getDbCon().resultSetToArrayList(query);
+            if (list == null) {
+
+            } else {
+                System.out.println("ShowForm connected....!!!!");
+                List<Country> datasList = (List<Country>) (List<?>) list;
+
+                System.out.println("ArrayList Add!!!");
+                req.setAttribute("datasList", datasList);
+                RequestDispatcher dispatcher = req.getRequestDispatcher("EditPage.jsp");
+                dispatcher.forward(req, resp);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    private void saveorupdateCountry(HttpServletRequest req, HttpServletResponse resp) {
+        if (mode == "edit") {
+            System.out.println("update called");
+            updateCountry(req, resp);
+            mode="";
+        } else {
+            System.out.println("save called");
+            addCountry(req, resp);
+        }
+    }
+
+    private void deleteCountry(HttpServletRequest req, HttpServletResponse resp) {
+        // int id = Integer.parseInt(req.getParameter("id"));
+
+        // Country book = new Country();
+        // book.deleteCountry(book);
+        // resp.sendRedirect("list");
+
+    }
+
+    private void listCountry(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        System.out.println("listCountry");
+        String query = "SELECT * from datas";
+        try {
+
+            List<Object> list = MysqlConnect.getDbCon().resultSetToArrayList(query);
+            System.out.println("data connected....!!!!");
+            List<Country> datasList = (List<Country>) (List<?>) list;
+
+            System.out.println("ArayList Add!!!");
+            req.setAttribute("datasList", datasList);
+            RequestDispatcher dispatcher = req.getRequestDispatcher("countrylist.jsp");
+            dispatcher.forward(req, resp);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void addCountry(HttpServletRequest req, HttpServletResponse resp) {
+        System.out.println("Add Country");
+
+        int id = Integer.parseInt(req.getParameter("id"));
+        String name = req.getParameter("name");
+
+        System.out.println(id + name);
+
+        String query = "INSERT INTO datas (id, name) VALUES (" + id + ",'" + name + "')";
+        try {
+            int rs = MysqlConnect.getDbCon().insert(query);
+            System.out.println("the no of rows inserted   " + rs);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+}

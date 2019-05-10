@@ -1,0 +1,710 @@
+==================Country.java====================
+package com.kgisl.servletjson;
+
+/**
+ * country
+ */
+public class Country {
+private int id;
+private String name;
+/**
+ * @return the id
+ */
+public int getId() {
+    return id;
+}
+/**
+ * @return the name
+ */
+public String getName() {
+    return name;
+}
+/**
+ * @param id the id to set
+ */
+public void setId(int id) {
+    this.id = id;
+}
+/**
+ * @param name the name to set
+ */
+public void setName(String name) {
+    this.name = name;
+}
+@Override
+public String toString() {
+    return id+""+name+"";
+}
+    
+}
+
+===================Countryservlet.java================
+package com.kgisl.servletjson;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+// import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import com.google.gson.Gson;
+
+/**
+ * Countryservlet
+ */
+@WebServlet("/country")
+public class Countryservlet extends HttpServlet {
+    ArrayList<Country> countryList = new ArrayList<Country>();
+    private Gson gson = new Gson();
+
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        // System.out.println("hai");
+        // Country c1=new Country();
+        // Country c2=new Country();
+        // c1.setId(1);
+        // c1.setName("siva");
+        // countryList.add(c1);
+        // c2.setId(2);
+        // c2.setName("santhosh");
+        // countryList.add(c2);
+
+        setAccessControlHeaders(resp);
+
+        String query = "SELECT * from countrylist";
+        List<Object> list;
+        try {
+            list = MysqlConnect.getDbCon().resultSetToArrayList(query);
+
+            List<Country> countryList = (List<Country>) (List<?>) list;
+            String countryJsonString = new Gson().toJson(countryList);
+            System.out.println(countryJsonString);
+            resp.setContentType("application/json");
+            resp.setCharacterEncoding("UTF-8");
+            resp.getWriter().write(countryJsonString);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        // req.setAttribute("countryJsonString", countryJsonString);
+        // RequestDispatcher dispatcher = req.getRequestDispatcher("index.jsp");
+        // dispatcher.forward(req, resp);
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        System.out.println("save method called");
+        String mode = req.getParameter("mode");
+        System.out.println("mode value called::" + mode);
+        String requestData = req.getReader().lines().collect(Collectors.joining());
+       System.out.println("????? requestData ?????\n\n" + requestData + "\n\n");
+
+       Gson gson = new Gson();
+       Country newCountry = gson.fromJson(requestData, Country.class);
+
+       System.out.println("$$$$$$$$$$$$$$");
+       System.out.println(newCountry.getId()+" ---->"+newCountry.getName());
+
+        String query = "INSERT INTO countrylist (id, name) VALUES (" + newCountry.getId() + ",'" + newCountry.getName() + "')";
+        try {
+            int rs = MysqlConnect.getDbCon().insert(query);
+            System.out.println("the no of rows inserted   " + rs);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        System.out.println("update method called");
+        String mode = req.getParameter("mode");
+        System.out.println("mode value called::" + mode);
+        // int id = Integer.parseInt(req.getParameter("id"));
+        // String name = req.getParameter("name");
+
+        // System.out.println(id + name);
+
+        String requestData = req.getReader().lines().collect(Collectors.joining());
+       System.out.println("????? requestData ?????\n\n" + requestData + "\n\n");
+
+       Gson gson = new Gson();
+       Country updateCountry = gson.fromJson(requestData, Country.class);
+
+       System.out.println("$$$$$$$$$$$$$$");
+       System.out.println(updateCountry.getId()+" ---->"+updateCountry.getName());
+
+        String query = "UPDATE countrylist SET id=" + updateCountry.getId() + ",name='" + updateCountry.getName() + "' where id=" + updateCountry.getId();
+        try {
+            int rs = MysqlConnect.getDbCon().edit(query);
+            System.out.println("the no of rows edited   " + rs);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        System.out.println("dodelete method called");
+        String requestData = req.getReader().lines().collect(Collectors.joining());
+       System.out.println("????? requestData ?????\n\n" + requestData + "\n\n");
+
+       Gson gson = new Gson();
+       Country removeCountry = gson.fromJson(requestData, Country.class);
+
+       System.out.println("$$$$$$$$$$$$$$");
+       System.out.println(removeCountry.getId()+" ---->"+removeCountry.getName());
+        String query = "DELETE from countrylist where id=" + removeCountry.getId();
+        try {
+            int rs = MysqlConnect.getDbCon().delete(query);
+            System.out.println("the no of rows deleted   " + rs);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void setAccessControlHeaders(HttpServletResponse resp) {
+        resp.setHeader("Access-Control-Allow-Origin", "http://localhost:9090");
+        resp.setHeader("Access-Control-Allow-Methods", "GET");
+    }
+
+}
+
+====================MysqlConnect.java=====================
+package com.kgisl.servletjson;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.HashMap;
+
+public final class MysqlConnect {
+    public Connection conn;
+    private Statement statement;
+    public static MysqlConnect db;
+    public static Object getDbCon;
+
+    private MysqlConnect() {
+        String url = "jdbc:mysql://localhost:3306/";
+        String dbName = "country";
+        // String driver = "com.mysql.jdbc.Driver";
+        String userName = "root";
+        String password = "";
+        try {
+            // Class.forName(driver).newInstance();
+            this.conn = (Connection) DriverManager.getConnection(url + dbName, userName, password);
+        } catch (Exception sqle) {
+            sqle.printStackTrace();
+        }
+    }
+
+    /**
+     *
+     * @return MysqlConnect Database connection object
+     */
+    public static synchronized MysqlConnect getDbCon() {
+        if (db == null) {
+            db = new MysqlConnect();
+        }
+        return db;
+
+    }
+
+    /**
+     *
+     * @param query String The query to be executed
+     * @return a ResultSet object containing the results or null if not available
+     * @throws SQLException
+     */
+    public ArrayList<Object> resultSetToArrayList(String query) throws SQLException {
+        statement = db.conn.createStatement();
+        ResultSet rs = statement.executeQuery(query);
+
+        ResultSetMetaData md = rs.getMetaData();
+        int columns = md.getColumnCount();
+
+        ArrayList<Object> list = new ArrayList<Object>();
+        while (rs.next()) {
+
+            HashMap<Object, Object> row = new HashMap<>(columns);
+            for (int i = 1; i <= columns; ++i) {
+                row.put(md.getColumnName(i), rs.getObject(i));
+            }
+            list.add(row);
+
+        }
+
+        return list;
+    }
+
+    /**
+     * @desc Method to insert data to a table
+     * @param insertQuery String The Insert query
+     * @return boolean
+     * @throws SQLException
+     */
+    public int insert(String insertQuery) throws SQLException {
+        statement = db.conn.createStatement();
+        int result = statement.executeUpdate(insertQuery);
+        return result;
+
+    }
+    
+      public int edit(String editQuery) throws SQLException {
+        statement = db.conn.createStatement();
+        int result = statement.executeUpdate(editQuery);
+        return result;
+
+    } public int delete(String deleteQuery) throws SQLException {
+        statement = db.conn.createStatement();
+        int result = statement.executeUpdate(deleteQuery);
+        return result;
+
+    }}
+
+
+============================Country.js===============
+var mode = "";
+function loadData() {
+    // alert('loadData!');
+    $.ajax({
+        url: "http://localhost:9090/country",
+        type: 'GET',
+
+        headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+        },
+        success: function (data) {
+            // alert(JSON.stringify(data));
+            //alert(data.length);
+            $("#countries").append("<table class='table' ><tr> <th width='50'>Id</th>"
+                + "<th width='50'>name</th> </tr></table>");
+            var tr;
+            for (var i = 0; i < data.length; i++) {
+                tr = $('<tr/>');
+                tr.append("<td >" + data[i].id + "</td>");
+                tr.append("<td>" + data[i].name + "</td>");
+                var d = JSON.stringify(data[i]);
+                //alert(d);
+                tr.append("<td><button onclick='edit(" + d + ")' >Edit</button> <button onclick=remove(" + d + ") >Delete</button></td>");
+                $('table').append(tr);
+            }
+        },
+        error: function () {
+            alert('fail....post');
+
+        }
+    });
+}
+
+$(document).ready(function () {
+
+    // Some code to be executed...
+    alert("Hello World!");
+    loadData();
+
+    $("input:submit").click(function () {
+        saveorupdate();
+
+
+    })
+});
+
+function saveorupdate() {
+    if (mode != "") {
+        alert("update clicked...")
+        update();
+    }
+    else {
+        alert("save clicked....")
+        save();
+    }
+}
+
+function save() {
+    alert("post");
+    var newCountry = {
+
+        "id": $('#id').val(),
+        "name": $('#name').val()
+    };
+    console.log(newCountry);
+    $.ajax({
+        type: "POST",
+        url: "http://localhost:9090/country",
+        data: JSON.stringify(newCountry),
+        contentType: "application/json; charset=utf-8",
+        dataType: "json",
+        success: function (data) { alert(data); console.log(data); },
+        failure: function (errMsg) {
+            console.log(errMsg);
+            alert(errMsg);
+        }
+    });
+}
+
+function edit(data) {
+    alert("update....." + JSON.stringify(data));
+    // updateID = data.id;
+    mode = "edit";
+
+    if (mode == "edit") { console.log(mode); $("#btn").text("update"); }
+
+    $("#id").val(data.id);
+    $("#name").val(data.name);
+}
+
+function update() {
+    alert("calling update")
+    var updateCountry = {
+
+        "id": $('#id').val(),
+        "name": $('#name').val()
+    };
+    console.log(updateCountry);
+    console.log("id is..." + $('#id').val());
+    alert("id is..." + $('#id').val());
+    $.ajax({
+        type: "PUT",
+        url: "http://localhost:9090/country",
+        data: JSON.stringify(updateCountry),
+        contentType: "application/json; charset=utf-8",
+        dataType: "json",
+        success: function (data) { alert(data); console.log(data); },
+        failure: function (errMsg) {
+            console.log(errMsg);
+            alert(errMsg);
+        }
+    });
+}
+
+function remove(data) {
+    alert("delete....." + JSON.stringify(data));
+    var removeCountry = {
+
+        "id": $('#id').val(),
+        "name": $('#name').val()
+    };
+    console.log(removeCountry);
+    $.ajax({
+        type: "DELETE",
+        url: "http://localhost:9090/country",
+        data: JSON.stringify(data),
+        contentType: "application/json; charset=utf-8",
+        dataType: "json",
+        success: function (result) {
+
+            $("#countries").html(result);
+            loadData();
+        }
+    });
+}
+
+========================Coun.js=======================
+
+
+
+var app = new function () {
+    var countries = [];
+    var result;
+    var mode = "";
+    this.FetchAll = function () {
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState == XMLHttpRequest.DONE) {
+                // alert(xhr.responseText);
+                result = xhr.responseText;
+                // console.log(result);
+                countries = JSON.parse(result);
+                // console.log(countries);
+                app.printtable();
+            }
+        }
+        xhr.open('GET', '/country', true);
+        xhr.send(null);
+
+
+    };
+    this.printtable = function () {
+        // alert(result);
+        var object = JSON.parse(result);
+        //    app.FetchAll();
+        this.el = document.getElementById("countries");
+        var data = '';
+        for (var i in object) {
+            data += '<tr>';
+            data += '<td>' + object[i].id + '</td>';
+            data += '<td>' + object[i].name + '</td>';
+            data += '<td><button onclick="app.Edit(' + object[i].id + ')">Edit</button></td>';
+            data += '<td><button onclick="app.Delete(' + object[i].id + ')">Delete</button></td>';
+            data += '</tr>';
+            data += '<br>';
+            data += '<br>';
+        }
+        this.el.innerHTML = data;
+    };
+
+    this.Edit = function (id) {
+
+        // var a = this.countries.indexOf(id);
+        // // console.log(id);
+        // alert(a);
+
+        mode = "edit";
+        document.getElementById('btn').innerHTML = "Update";
+
+        for (var i = 0; i < countries.length; i++) {
+            if (countries[i].id == id) {
+                // // console.log("Matched --->"+countries[i].id);
+                document.getElementById('id').value = countries[i].id;
+                document.getElementById('name').value = countries[i].name;
+            }
+        }
+
+    };
+
+
+    this.saveorupdate = function () {
+        var id = document.getElementById('id').value;
+        var name = document.getElementById('name').value;
+        if (mode == "") {
+            alert("save called");
+            alert("id" + id + "name  " + name);
+
+            var url = "/country";
+            var xhr = new XMLHttpRequest();
+            xhr.onload = function () {
+                if (xhr.readyState == 4 && xhr.status == "200") {
+                    app.FetchAll();
+                }
+            }
+            xhr.open("POST", url + '?id=' + id + '&name=' + name, true);
+            xhr.send(null);
+
+            app.FetchAll();
+        }
+        else {
+
+            alert("update called");
+            alert("id" + id + "name  " + name);
+
+            var url = "/country";
+            var xhr = new XMLHttpRequest();
+            xhr.onload = function () {
+                if (xhr.readyState == 4 && xhr.status == "200") {
+                    app.FetchAll();
+                }
+            }
+            xhr.open("PUT", url + '?id=' + id + '&name=' + name, true);
+            xhr.send(null);
+            document.getElementById('btn').innerHTML = "Add";
+            mode="";
+            app.FetchAll();
+        }
+
+        document.getElementById('id').value = "";
+        document.getElementById('name').value = "";
+    };
+
+    this.Delete = function (id) {
+        // console.log("delete called " + id);
+        var url = '/country';
+        var xhr = new XMLHttpRequest();
+        xhr.open("DELETE", url + '?id=' + id, true);
+        xhr.onload = function () {
+            if (xhr.readyState == 4 && xhr.status == "200") {
+                app.FetchAll();
+            }
+        }
+        
+        xhr.send(null);
+        app.FetchAll();
+    };
+}
+//app.FetchAll();
+
+============================index.html==============
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <!-- <script src="js/jquery.min.js"></script> -->
+    <script src="country.js"></script>
+</head>
+
+<body>
+    <form action="javascript:void(0);" method="POST" onsubmit="saveorupdate()">
+        <label>Country id: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+        <input type="text" name="id" id="id">
+        <br>
+        <label>Country name: </label>
+        <input type="text" name="name" id="name">
+        <!-- <button type="submit" name="submit" id="submit">Add</button> -->
+        <br>
+        <button id="btn">Add</button>
+    </form>
+    <hr>
+
+    <p id="countries"></p>
+</body>
+
+</html>
+
+-----------------------------------------------------------countryServlet-------------------------------------------------------------------------------------------
+package com.kgisl.servletjson;
+
+// import java.io.BufferedReader;
+import java.io.IOException;
+// import java.io.InputStreamReader;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+// import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import com.google.gson.Gson;
+
+/**
+ * Countryservlet
+ */
+@WebServlet("/country")
+public class Countryservlet extends HttpServlet {
+    private static final long serialVersionUID = 1L;
+    ArrayList<Country> countryList = new ArrayList<Country>();
+    private Gson gson = new Gson();
+
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        // System.out.println("hai");
+        // Country c1=new Country();
+        // Country c2=new Country();
+        // c1.setId(1);
+        // c1.setName("siva");
+        // countryList.add(c1);
+        // c2.setId(2);
+        // c2.setName("santhosh");
+        // countryList.add(c2);
+
+        setAccessControlHeaders(resp);
+
+        String query = "SELECT * from countrylist";
+        List<Object> list;
+        try {
+            list = MysqlConnect.getDbCon().resultSetToArrayList(query);
+
+            List<Country> countryList = (List<Country>) (List<?>) list;
+            String countryJsonString = new Gson().toJson(countryList);
+            System.out.println(countryJsonString);
+            resp.setContentType("application/json");
+            resp.setCharacterEncoding("UTF-8");
+            resp.getWriter().write(countryJsonString);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        // req.setAttribute("countryJsonString", countryJsonString);
+        // RequestDispatcher dispatcher = req.getRequestDispatcher("index.jsp");
+        // dispatcher.forward(req, resp);
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        System.out.println("save method called");
+        String mode = req.getParameter("mode");
+        System.out.println("mode value called::" + mode);
+        String requestData = req.getReader().lines().collect(Collectors.joining());
+       System.out.println("????? requestData ?????\n\n" + requestData + "\n\n");
+
+       Gson gson = new Gson();
+       Country newCountry = gson.fromJson(requestData, Country.class);
+
+       System.out.println("$$$$$$$$$$$$$$");
+       System.out.println(newCountry.getId()+" ---->"+newCountry.getName());
+
+        String query = "INSERT INTO countrylist (id, name) VALUES (" + newCountry.getId() + ",'" + newCountry.getName() + "')";
+        try {
+            int rs = MysqlConnect.getDbCon().insert(query);
+            System.out.println("the no of rows inserted   " + rs);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        System.out.println("update method called");
+        String mode = req.getParameter("mode");
+        System.out.println("mode value called::" + mode);
+        // int id = Integer.parseInt(req.getParameter("id"));
+        // String name = req.getParameter("name");
+
+        // System.out.println(id + name);
+
+        String requestData = req.getReader().lines().collect(Collectors.joining());
+       System.out.println("????? requestData ?????\n\n" + requestData + "\n\n");
+
+       Gson gson = new Gson();
+       Country updateCountry = gson.fromJson(requestData, Country.class);
+
+       System.out.println("$$$$$$$$$$$$$$");
+       System.out.println(updateCountry.getId()+" ---->"+updateCountry.getName());
+
+        String query = "UPDATE countrylist SET id=" + updateCountry.getId() + ",name='" + updateCountry.getName() + "' where id=" + updateCountry.getId();
+        try {
+            int rs = MysqlConnect.getDbCon().edit(query);
+            System.out.println("the no of rows edited   " + rs);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        System.out.println("dodelete method called");
+        String requestData = req.getReader().lines().collect(Collectors.joining());
+       System.out.println("????? requestData ?????\n\n" + requestData + "\n\n");
+
+       Gson gson = new Gson();
+       Country removeCountry = gson.fromJson(requestData, Country.class);
+
+       System.out.println("$$$$$$$$$$$$$$");
+       System.out.println(removeCountry.getId()+" ---->"+removeCountry.getName());
+        String query = "DELETE from countrylist where id=" + removeCountry.getId();
+        try {
+            int rs = MysqlConnect.getDbCon().delete(query);
+            System.out.println("the no of rows deleted   " + rs);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void setAccessControlHeaders(HttpServletResponse resp) {
+        resp.setHeader("Access-Control-Allow-Origin", "http://localhost:9090");
+        resp.setHeader("Access-Control-Allow-Methods", "GET");
+    }
+
+}
