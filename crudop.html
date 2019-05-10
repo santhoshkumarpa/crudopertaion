@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+
+<body>
+        <h2> Student List</h2>
+        <details>
+        <summary>Copyrights-2018</summary>
+        <p>Rights to reserve the data</p>
+        </details><br>
+        <p id="counter"></p>
+        <table border = "2">
+        <tr>
+        <th>Name</th>
+        </tr>
+        <tbody id="Students">
+        </tbody>
+        </table><br>
+         
+        <form action="javascript:void(0);" method="POST" onsubmit="app.Add()">
+        <input type="text" id="add-name" placeholder="New Student">
+        <input type="submit" value="Add">
+        </form><br>
+        <form action="javascript:void(0);" method="POST" id="saveEdit" onsubmit="app.Edit()">
+        <input type="text" id="edit-name" placeholder="Edit Name">
+        <input type="submit" value="Edit" />
+        </form><br>
+        <script src = "crudop.js"></script>
+</body>
+
+</html>

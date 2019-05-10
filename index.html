@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+</head>
+
+<body>
+    <Div class="form-group">
+        <form action="javascript:void(0);" method="POST" onsubmit="app.saveorupdate()">
+            <label>id:&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</label>
+            <input type="text" name="id" id="id">
+            <br>
+            <label>Country name: </label>
+            <input type="text" name="name" id="name">
+            <!-- <button type="submit" name="submit" id="submit">Add</button> -->
+            <br>
+            <button id="btn">Add</button>
+        </form>
+        <hr>
+        <table>
+            <tr>
+                <th>Id</th>
+                <th>Name</th>
+                <th>Actions</th>
+            </tr>
+            <tbody id="countries">
+            </tbody>
+        </table>
+        <p id ="test"></p>
+    </Div>
+    <script src="country.js"></script>
+</body>
+
+</html>

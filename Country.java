@@ -1,9 +1,7 @@
-package com.kgisl.fetchapi;
-
 /**
- * Country
+ * dao
  */
-public class Country {
+public class Country{
 
     private int id;
     private String name;
@@ -35,5 +33,10 @@ public class Country {
     public void setId(int id) {
         this.id = id;
     }
-
+ @Override
+ public String toString() {
+     return id+"->"+name;
+ }
+    
+    
 }
